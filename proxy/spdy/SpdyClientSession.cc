@@ -89,6 +89,19 @@ SpdyRequest::clear()
   Debug("spdy", "****Delete Request[%" PRIu64 ":%d]", spdy_sm->sm_id, stream_id);
 }
 
+SpdyRequest *
+SpdyRequest::alloc()
+{
+  return spdyRequestAllocator.alloc();
+}
+
+void
+SpdyRequest::destroy()
+{
+  this->clear();
+  spdyRequestAllocator.free(this);
+}
+
 void
 SpdyClientSession::init(NetVConnection *netvc)
 {
@@ -136,8 +149,7 @@ SpdyClientSession::clear()
   for (; iter != endIter; ++iter) {
     SpdyRequest *req = iter->second;
     if (req) {
-      req->clear();
-      spdyRequestAllocator.free(req);
+      req->destroy();
     } else {
       Error("req null in SpdSM::clear");
     }
@@ -286,7 +298,6 @@ SpdyClientSession::destroy()
   this->clear();
   spdyClientSessionAllocator.free(this);
 }
-
 
 SpdyClientSession *
 SpdyClientSession::alloc()

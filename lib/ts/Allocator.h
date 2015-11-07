@@ -45,6 +45,7 @@
 #include "ts/ink_defs.h"
 #include "ts/ink_resource.h"
 #include <execinfo.h>
+#include <new>
 
 #define RND16(_x) (((_x) + 15) & ~15)
 
@@ -119,7 +120,6 @@ public:
   alloc()
   {
     void *ptr = ink_freelist_new(this->fl);
-
     memcpy(ptr, (void *)&this->proto.typeObject, sizeof(C));
     return (C *)ptr;
   }
@@ -194,11 +194,11 @@ public:
   ClassAllocator(const char *name, unsigned int chunk_size = 128, unsigned int alignment = 16)
   {
     ink_freelist_init(&this->fl, name, RND16(sizeof(C)), chunk_size, RND16(alignment));
+    ::new ((void*)&proto.typeObject) C();
   }
 
   struct {
-    C typeObject;
-    int64_t space_holder;
+    uint8_t typeObject[sizeof(C)];
   } proto;
 };
 
